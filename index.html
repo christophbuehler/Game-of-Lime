@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Game of Lime</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 1);
+			text-align: center;
+        }
+		h1 {
+			color: #fff;
+			font-family: 'Times New Roman', serif;
+		}
+		canvas {
+			border: 1px solid rgba(255, 255, 255, .8);
+		}
+    </style>
+    <script>
+        (() => {
+            'use strict';
+
+            window.onload = init;
+            function init() {
+                const
+                    s = 8,
+                    dimX = 80,
+                    dimY = 80,
+                    canvas = document.createElement('canvas'),
+                    ctx = canvas.getContext('2d');
+                let cells = [], mDown = false;
+
+                for (let i = 0; i < dimX * dimY; i++) {
+                    cells.push(false);
+                }
+
+                canvas.width = dimX * s;
+                canvas.height = dimY * s;
+                document.body.appendChild(canvas);
+
+                canvas.addEventListener('mousedown', e => {
+                    mDown = true;
+                });
+                canvas.addEventListener('mouseup', e => {
+                    mDown = false;
+                });
+                canvas.addEventListener('mousemove', e => {
+                    if (!mDown) return false;
+                    const
+                        x = ~~((e.clientX - canvas.getBoundingClientRect().left) / s),
+                        y = ~~((e.clientY - canvas.getBoundingClientRect().top) / s);
+                    cells[y * dimX + x] = true;
+                });
+
+                (function draw() {
+                    ctx.beginPath();
+                    ctx.fillStyle = 'rgba(0, 0, 0, .1)';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.fill();
+                    ctx.fillStyle = 'rgba(54, 110, 0, .8)'
+                    cells.forEach((c, i) => {
+                        const
+                            x = i % dimX,
+                            y = ~~(i / dimX);
+                        if (c) ctx.fillRect(x * s, y * s, s, s);
+                    });
+                    ctx.fill();
+                    ctx.closePath();
+
+                    if (!mDown) cells = cells.map((c, i, t) => {
+                        const
+                            x = i % dimX,
+                            y = ~~(i / dimX);
+                        let neighbors = 0;
+
+                        if (x > 0) {
+                            if (y > 0 && t[(y - 1) * dimX + x - 1]) neighbors++; // top left
+                            if (t[i - 1]) neighbors++; // center left
+                            if (y < dimY - 1 && t[(y + 1) * dimX + x - 1]) neighbors++; // bottom left
+                        }
+
+                        if (x < dimX - 1) {
+                            if (y > 0 && t[(y - 1) * dimX + x + 1]) neighbors++; // top right
+                            if (t[i + 1]) neighbors++; // center right
+                            if (y < dimY - 1 && t[(y + 1) * dimX + x + 1]) neighbors++; // bottom right
+                        }
+
+                        if (y > 0 && t[(y - 1) * dimX + x]) neighbors++; // top center
+                        if (y < dimY - 1 && t[(y + 1) * dimX + x]) neighbors++; // bottom center
+
+                        // cell is alive
+                        if (c) {
+                            if (neighbors < 2) return false;
+                            return neighbors === 2 || neighbors === 3;
+                        }
+
+                        return neighbors === 3;
+                    });
+                    window.requestAnimationFrame(draw);
+                })();
+            }
+        })();
+    </script>
+</head>
+
+<body>
+	<h1>Game of Lime</h1>
+</body>
+
+</html>
